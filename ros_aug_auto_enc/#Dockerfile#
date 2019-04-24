@@ -1,0 +1,67 @@
+# nvidia-docker build -t rosindustrial/ros-desktop-full:kinetic-nvidia9.0 .
+FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+LABEL maintainer "Koby"
+
+# nvidia-docker hooks accerareted graphics
+LABEL com.nvidia.volumes.needed="nvidia_driver"
+ENV PATH /usr/local/nvidia/bin:${PATH}
+ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
+
+# Setup your sources.list
+RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu xenial main" > /etc/apt/sources.list.d/ros-latest.list'
+
+# Set up your keys
+RUN apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C365BD9FF1F717815A3895523BAEEB01FA116
+
+# Installation
+RUN apt-get update && apt-get install -y \
+    ros-kinetic-desktop-full \
+    && rm -rf /var/lib/apt/lists/*
+
+# Initialize rosdep
+RUN rosdep init
+RUN rosdep update
+
+
+RUN echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
+
+RUN apt-get update && apt-get install -y \
+    python-rosinstall \
+    python-rosinstall-generator \
+    python-wstool \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+
+RUN apt update && apt upgrade -y
+
+#install emacs and openssl
+RUN apt-get install emacs -y
+RUN apt-get -y install bash-completion git build-essential emacs
+RUN apt-get install openssl -y
+
+#python setup
+RUN  apt-get install python-pip python-dev build-essential -y
+RUN pip install --upgrade pip
+RUN pip install --upgrade --force-reinstall pip==9.0.3
+RUN pip install blockstack --upgrade
+RUN python -m easy_install --upgrade pyOpenSSL
+RUN pip install --upgrade cryptography
+
+#install opencv and tensorflow
+RUN pip install opencv-python && pip install opencv-contrib-python
+RUN pip install scikit-video
+RUN pip install tensorflow-gpu 
+RUN pip install --upgrade --force-reinstall pip==18.1
+
+#set up for augmented autoencorder
+sudo apt-get install libglfw3-dev libglfw3  
+pip install --user --pre --upgrade PyOpenGL PyOpenGL_accelerate
+pip install --user cython
+pip install --user cyglfw3
+pip install --user pyassimp==3.3
+pip install --user imgaug
+pip install --user matplotlib==2.0
+pip install --user pillow==4.3
+pip install --user progressbar
+
